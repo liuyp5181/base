@@ -19,8 +19,7 @@ const (
 )
 
 type Global struct {
-	Namespace   string `mapstructure:"namespace"`
-	ServiceName string `mapstructure:"service_name"`
+	Namespace string `mapstructure:"namespace"`
 }
 
 type Monitor struct {
@@ -67,7 +66,7 @@ var (
 	localData   []byte
 	vp          *viper.Viper
 	cfg         Conf
-	ServiceName string
+	ServiceName = "Service"
 )
 
 func init() {
@@ -98,12 +97,8 @@ func init() {
 	if cfg.Global.Namespace == "" {
 		panic("namespace is nil")
 	}
-	ServiceName = cfg.Global.ServiceName
 
 	if cfg.Log != nil {
-		if cfg.Log.Name == "" {
-			cfg.Log.Name = ServiceName
-		}
 		err = log.Init(cfg.Log)
 		if err != nil {
 			panic(fmt.Sprintf("init Log failed, config=[%+v], err_msg=[%s]", cfg.Log, err.Error()))
