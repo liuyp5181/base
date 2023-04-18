@@ -3,6 +3,7 @@ package log
 import (
 	"bytes"
 	"fmt"
+	"github.com/liuyp5181/base/signal"
 	"os"
 	"runtime"
 	"strings"
@@ -67,6 +68,11 @@ func init() {
 	logger.f = os.Stderr
 	logger.mode = consoleMode
 	go watch()
+
+	signal.RegisterClose(func() {
+		close(logger.closeCh)
+		logger.wg.Wait()
+	})
 }
 
 func Init(cfg *Config) error {

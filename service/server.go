@@ -55,6 +55,8 @@ func unaryServerInterceptor(ctx context.Context, req interface{}, info *grpc.Una
 	var tid = e.GetClient("trace_id")
 	var uid = e.GetClient("user_id")
 
+	e.SetClient("trace_id", tid)
+
 	var addr string
 	pr, ok := peer.FromContext(ctx)
 	if ok {

@@ -1,4 +1,4 @@
-package util
+package signal
 
 import (
 	"os"
@@ -9,7 +9,6 @@ import (
 var closeFunc []func()
 
 func init() {
-	return
 	go func() {
 		osc := make(chan os.Signal, 1)
 		signal.Notify(osc, syscall.SIGTERM, syscall.SIGINT)
@@ -17,6 +16,7 @@ func init() {
 		for _, f := range closeFunc {
 			f()
 		}
+		os.Exit(1500)
 	}()
 }
 

@@ -37,7 +37,7 @@ var clients = &Clients{
 	m:    map[string]*Client{},
 }
 
-func Connect(serviceName ...string) error {
+func InitClients(serviceName ...string) error {
 	if len(serviceName) == 0 {
 		return initClient("")
 	}
