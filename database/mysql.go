@@ -3,6 +3,8 @@ package database
 import (
 	"fmt"
 	"github.com/liuyp5181/base/config"
+	"gorm.io/driver/mysql"
+	"gorm.io/gorm"
 )
 
 var mysqlList = make(map[string]*gorm.DB)
