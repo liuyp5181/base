@@ -4,8 +4,8 @@ package service
 //import (
 //	"bytes"
 //	"context"
-//	configmgrpb "etcd/api/configmgr"
-//	"etcd/pkg/log"
+//	configmgrpb "github.com/liuyp5181/base/api/configmgr"
+//	"github.com/liuyp5181/base/log"
 //	"fmt"
 //	"github.com/spf13/viper"
 //	"reflect"

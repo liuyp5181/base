@@ -2,11 +2,11 @@ package service
 
 import (
 	"context"
-	"etcd/pkg/config"
-	"etcd/pkg/etcd"
-	"etcd/pkg/log"
-	"etcd/pkg/service/extend"
 	"fmt"
+	"github.com/liuyp5181/base/config"
+	"github.com/liuyp5181/base/etcd"
+	"github.com/liuyp5181/base/log"
+	"github.com/liuyp5181/base/service/extend"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/health"
 	"google.golang.org/grpc/health/grpc_health_v1"

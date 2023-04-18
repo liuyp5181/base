@@ -2,9 +2,9 @@ package cache
 
 import (
 	"context"
-	"etcd/pkg/config"
 	"fmt"
 	"github.com/go-redis/redis/v8"
+	"github.com/liuyp5181/base/config"
 	"reflect"
 )
 

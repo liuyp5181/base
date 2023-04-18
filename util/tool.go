@@ -1,8 +1,8 @@
 package util
 
 import (
-	"etcd/pkg/log"
 	"fmt"
+	"github.com/liuyp5181/base/log"
 	"runtime"
 )
 

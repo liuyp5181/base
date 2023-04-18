@@ -1,8 +1,8 @@
 package database
 
 import (
-	"etcd/pkg/config"
 	"fmt"
+	"github.com/liuyp5181/base/config"
 )
 
 type Option func(*config.Database)

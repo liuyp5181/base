@@ -1,4 +1,4 @@
-module base
+module github.com/liuyp5181/base
 
 go 1.20
 

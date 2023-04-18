@@ -1,7 +1,7 @@
 package etcd
 
 import (
-	"etcd/pkg/log"
+	"github.com/liuyp5181/base/log"
 	clientv3 "go.etcd.io/etcd/client/v3"
 )
 

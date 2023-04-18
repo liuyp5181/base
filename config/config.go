@@ -2,10 +2,10 @@ package config
 
 import (
 	"bytes"
-	"etcd/pkg/etcd"
-	"etcd/pkg/log"
 	"flag"
 	"fmt"
+	"github.com/liuyp5181/base/etcd"
+	"github.com/liuyp5181/base/log"
 	"github.com/spf13/viper"
 	clientv3 "go.etcd.io/etcd/client/v3"
 	"io/ioutil"

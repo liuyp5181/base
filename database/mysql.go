@@ -1,10 +1,8 @@
 package database
 
 import (
-	"etcd/pkg/config"
 	"fmt"
-	"gorm.io/driver/mysql"
-	"gorm.io/gorm"
+	"github.com/liuyp5181/base/config"
 )
 
 var mysqlList = make(map[string]*gorm.DB)
