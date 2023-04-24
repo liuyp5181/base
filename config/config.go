@@ -22,11 +22,6 @@ type Global struct {
 	Namespace string `mapstructure:"namespace"`
 }
 
-type Monitor struct {
-	IP   string `mapstructure:"ip"`
-	Port int    `mapstructure:"port"`
-}
-
 type Server struct {
 	IP   string `mapstructure:"ip"`
 	Port int    `mapstructure:"port"`
@@ -55,7 +50,6 @@ type Conf struct {
 	Etcd     []etcd.Config `mapstructure:"Etcd"`
 	Log      *log.Config   `mapstructure:"Log"`
 	Global   *Global       `mapstructure:"global"`
-	Monitor  *Monitor      `mapstructure:"monitor"`
 	Server   Server        `mapstructure:"server"`
 	Database []Database    `mapstructure:"database"`
 	Cache    []Cache       `mapstructure:"cache"`
@@ -70,11 +64,10 @@ var (
 )
 
 func init() {
-	if confPath == defaultConfigPath && !flag.Parsed() {
-		flag.StringVar(&confPath, "conf", defaultConfigPath, "config file path")
-		flag.Parse()
-	}
+	flag.StringVar(&confPath, "conf", defaultConfigPath, "config file path")
+}
 
+func Init() {
 	data, err := ioutil.ReadFile(confPath)
 	if err != nil {
 		panic(fmt.Sprintf("read config file failed, config-file=[%s], err_msg=[%s]", confPath, err.Error()))
@@ -118,7 +111,6 @@ func init() {
 	if err != nil {
 		panic(fmt.Sprintf("init Etcd failed, config=[%+v], err_msg=[%s]", ec, err.Error()))
 	}
-
 }
 
 func readConfig() error {

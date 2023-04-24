@@ -179,6 +179,18 @@ func newClient(s *etcd.Service) (*Client, error) {
 }
 
 func initClient(name string) error {
+	is := func() bool {
+		clients.RLock()
+		defer clients.RUnlock()
+		if len(clients.list[name]) > 0 {
+			return true
+		}
+		return false
+	}
+	if is() {
+		return nil
+	}
+
 	list, err := etcd.GetService(name)
 	if err != nil {
 		return err

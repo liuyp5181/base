@@ -1,0 +1,16 @@
+// protoc --go_out=.  --go-grpc_out=. *.proto
+syntax = "proto3";
+
+package configmgr;
+option go_package = "./;api";
+
+service Greeter {
+  rpc Register(RegisterReq) returns(RegisterRes){}
+}
+
+message RegisterReq {
+  string name = 1;
+  uint32 port = 2;
+}
+message RegisterRes{
+}

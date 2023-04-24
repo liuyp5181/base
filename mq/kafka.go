@@ -6,12 +6,14 @@ import (
 	"time"
 )
 
-var (
+type Kafka struct {
 	producer sarama.SyncProducer
 	consumer sarama.Consumer
-)
+}
 
-func InitKafka(adders []string) {
+var kafkaList = make(map[string]*Kafka)
+
+func ConnectKafka(name string, adders []string) error {
 	config := sarama.NewConfig()
 	config.Producer.Return.Successes = true
 	config.Producer.RequiredAcks = sarama.WaitForAll
@@ -26,26 +28,32 @@ func InitKafka(adders []string) {
 
 	c, err := sarama.NewClient(adders, config)
 	if err != nil {
-		panic(err)
+		return err
 	}
 
 	p, err := sarama.NewSyncProducerFromClient(c)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	producer = p
 
 	cs, err := sarama.NewConsumerFromClient(c)
 	if err != nil {
-		panic(err)
+		return err
 	}
-	consumer = cs
+
+	kafkaList[name] = &Kafka{
+		producer: p,
+		consumer: cs,
+	}
+
+	return nil
 }
 
-func Publish(topic string, msg interface{}) error {
-	data, _ := json.Marshal(msg)
+func Publish(name, topic string, msg interface{}) error {
+	kf := kafkaList[name]
 
-	_, _, err := producer.SendMessage(&sarama.ProducerMessage{
+	data, _ := json.Marshal(msg)
+	_, _, err := kf.producer.SendMessage(&sarama.ProducerMessage{
 		Topic: topic,
 		Key:   nil,
 		Value: sarama.StringEncoder(data),
@@ -54,16 +62,18 @@ func Publish(topic string, msg interface{}) error {
 	return err
 }
 
-func Subscribe(topic string, f func(key string, val []byte)) {
-	pl, err := consumer.Partitions(topic)
+func Subscribe(name, topic string, f func(key string, val []byte)) error {
+	kf := kafkaList[name]
+	consumer := kf.consumer
 
+	pl, err := consumer.Partitions(topic)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	for _, p := range pl {
 		cp, err := consumer.ConsumePartition(topic, p, sarama.OffsetNewest)
 		if err != nil {
-			panic(err)
+			return err
 		}
 
 		go func(_cp sarama.PartitionConsumer) {
@@ -72,4 +82,6 @@ func Subscribe(topic string, f func(key string, val []byte)) {
 			}
 		}(cp)
 	}
+
+	return nil
 }

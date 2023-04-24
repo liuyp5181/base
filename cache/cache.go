@@ -34,7 +34,7 @@ func WithDB(db int) Option {
 func connect(conf config.Cache) error {
 	switch conf.Type {
 	case "redis":
-		return NewRedis(conf)
+		return ConnectRedis(conf)
 	}
 	return fmt.Errorf("not found type = %v", conf.Type)
 }

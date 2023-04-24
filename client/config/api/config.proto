@@ -1,0 +1,30 @@
+// protoc --go_out=.  --go-grpc_out=. *.proto
+syntax = "proto3";
+
+package configmgr;
+option go_package = "./;api";
+
+service Greeter {
+  rpc GetConfig(GetConfigReq) returns(GetConfigRes){}
+  rpc Watch(WatchReq) returns(stream WatchRes){}
+}
+
+message GetConfigReq {
+  string key = 1;
+}
+message GetConfigRes{
+  string val = 1; // json
+}
+
+enum WatchType {
+  PUT=0;
+  DELETE=1;
+}
+message WatchReq {
+  string key = 1;
+}
+message WatchRes{
+  WatchType type = 1;
+  string key = 2;
+  bytes val = 3;
+}

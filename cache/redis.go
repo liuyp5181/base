@@ -10,7 +10,7 @@ import (
 
 var redisList = make(map[string]*redis.Client)
 
-func NewRedis(cfg config.Cache) error {
+func ConnectRedis(cfg config.Cache) error {
 	c := redis.NewClient(&redis.Options{
 		Addr:     fmt.Sprintf("%s:%d", cfg.Host, cfg.Port), // redis地址
 		Password: cfg.Pass,                                 // redis密码，没有则留空

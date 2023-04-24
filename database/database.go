@@ -40,7 +40,7 @@ func WithDB(db string) Option {
 func connect(conf config.Database) error {
 	switch conf.Type {
 	case "mysql":
-		return NewMysql(conf)
+		return ConnectMysql(conf)
 	}
 	return fmt.Errorf("not found type = %v", conf.Type)
 }
