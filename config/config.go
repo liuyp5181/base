@@ -81,7 +81,7 @@ func Init() {
 
 	err = vp.Unmarshal(&cfg)
 	if err != nil {
-		panic(fmt.Sprintf("LoadLocal failed, err_msg=[%s] content=[\n%s]", err.Error(), string(localData)))
+		panic(fmt.Sprintf("Unmarshal failed, err_msg=[%s] content=[\n%s]", err.Error(), string(localData)))
 	}
 
 	fmt.Println("config = ", string(data))

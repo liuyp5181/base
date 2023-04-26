@@ -4,7 +4,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v3.17.3
-// source: monitor.proto
+// source: config.proto
 
 package api
 
@@ -172,5 +172,5 @@ var Greeter_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "monitor.proto",
+	Metadata: "config.proto",
 }

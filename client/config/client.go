@@ -13,9 +13,14 @@ import (
 	"github.com/liuyp5181/base/service"
 )
 
-var configList sync.Map
+var configList = struct {
+	sync.RWMutex
+	list map[string]map[string]interface{}
+}{
+	list: map[string]map[string]interface{}{},
+}
 
-func loadConfig(val []byte, conf interface{}, confType string) error {
+func load(val []byte, conf interface{}, confType string) error {
 	vp := viper.New()
 	vp.SetConfigType(confType)
 	vp.AutomaticEnv()
@@ -30,8 +35,8 @@ func loadConfig(val []byte, conf interface{}, confType string) error {
 	return nil
 }
 
-func LoadConfig(key string, conf interface{}, confType string) error {
-	t := reflect.TypeOf(conf)
+func Load(group, key string, confPtr interface{}, confType string) error {
+	t := reflect.TypeOf(confPtr)
 	if t.Kind() != reflect.Ptr {
 		return fmt.Errorf("conf is not ptr, kind is %v", t.Kind().String())
 	}
@@ -48,22 +53,30 @@ func LoadConfig(key string, conf interface{}, confType string) error {
 	}
 	log.Info("val = ", resp.Val)
 
-	err = loadConfig([]byte(resp.Val), conf, confType)
+	err = load([]byte(resp.Val), confPtr, confType)
 	if err != nil {
 		log.Error(err)
 		return err
 	}
-	configList.Store(key, conf)
+
+	configList.Lock()
+	defer configList.Unlock()
+	m, ok := configList.list[group]
+	if !ok {
+		m = make(map[string]interface{})
+	}
+	m[key] = confPtr
+	configList.list[group] = m
 
 	return nil
 }
 
-func WatchConfig(key string, conf interface{}, confType string) error {
-	t := reflect.TypeOf(conf)
-	if t.Kind() == reflect.Ptr {
-		t = t.Elem()
+func Watch(group, key string, confPtr interface{}, confType string) error {
+	t := reflect.TypeOf(confPtr)
+	if t.Kind() != reflect.Ptr {
+		return fmt.Errorf("conf is not ptr, kind is %v", t.Kind().String())
 	}
-	cfg := reflect.New(t).Interface()
+	t = t.Elem()
 
 	list := service.GetClientList(pb.Greeter_ServiceDesc.ServiceName)
 	if len(list) == 0 {
@@ -72,7 +85,7 @@ func WatchConfig(key string, conf interface{}, confType string) error {
 
 	for _, cc := range list {
 		c := pb.NewGreeterClient(cc)
-		stream, err := c.Watch(context.Background(), &pb.WatchReq{Key: key})
+		stream, err := c.Watch(context.Background(), &pb.WatchReq{Group: group, Key: key})
 		if err != nil {
 			log.Error(err)
 			return err
@@ -84,15 +97,32 @@ func WatchConfig(key string, conf interface{}, confType string) error {
 					log.Error(err)
 					return
 				}
+
 				switch res.Type {
 				case pb.WatchType_PUT:
-					err := loadConfig(res.Val, &cfg, confType)
+					cfg := reflect.New(t).Interface()
+					err := load(res.Val, &cfg, confType)
 					if err != nil {
 						log.Error(err)
 					}
-					configList.Store(res.Key, cfg)
+
+					configList.Lock()
+					m, ok := configList.list[res.Group]
+					if !ok {
+						m = make(map[string]interface{})
+					}
+					m[res.Key] = &cfg
+					configList.list[res.Group] = m
+					configList.Unlock()
+
 				case pb.WatchType_DELETE:
-					configList.Delete(res.Key)
+					configList.Lock()
+					m, ok := configList.list[res.Group]
+					if ok {
+						delete(m, res.Key)
+						configList.list[res.Group] = m
+					}
+					configList.Unlock()
 				}
 			}
 		}(stream)
@@ -101,10 +131,12 @@ func WatchConfig(key string, conf interface{}, confType string) error {
 	return nil
 }
 
-func GetConfig(name string) interface{} {
-	val, ok := configList.Load(name)
-	if ok {
-		return val
+func GetConfig(group, key string) interface{} {
+	configList.RLock()
+	defer configList.RUnlock()
+	m, ok := configList.list[group]
+	if !ok {
+		return nil
 	}
-	return nil
+	return m[key]
 }

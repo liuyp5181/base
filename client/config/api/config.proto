@@ -10,7 +10,8 @@ service Greeter {
 }
 
 message GetConfigReq {
-  string key = 1;
+  string group = 1;
+  string key = 2;
 }
 message GetConfigRes{
   string val = 1; // json
@@ -21,10 +22,12 @@ enum WatchType {
   DELETE=1;
 }
 message WatchReq {
-  string key = 1;
+  string group = 1;
+  string key = 2;
 }
 message WatchRes{
   WatchType type = 1;
-  string key = 2;
-  bytes val = 3;
+  string group = 2;
+  string key = 3;
+  bytes val = 4;
 }
