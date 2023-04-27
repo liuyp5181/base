@@ -4,7 +4,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             v3.17.3
-// source: config.proto
+// source: configmgr.proto
 
 package api
 
@@ -21,15 +21,15 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Greeter_GetConfig_FullMethodName = "/configmgr.Greeter/GetConfig"
-	Greeter_Watch_FullMethodName     = "/configmgr.Greeter/Watch"
+	Greeter_Get_FullMethodName   = "/configmgr.Greeter/Get"
+	Greeter_Watch_FullMethodName = "/configmgr.Greeter/Watch"
 )
 
 // GreeterClient is the client API for Greeter service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type GreeterClient interface {
-	GetConfig(ctx context.Context, in *GetConfigReq, opts ...grpc.CallOption) (*GetConfigRes, error)
+	Get(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*GetRes, error)
 	Watch(ctx context.Context, in *WatchReq, opts ...grpc.CallOption) (Greeter_WatchClient, error)
 }
 
@@ -41,9 +41,9 @@ func NewGreeterClient(cc grpc.ClientConnInterface) GreeterClient {
 	return &greeterClient{cc}
 }
 
-func (c *greeterClient) GetConfig(ctx context.Context, in *GetConfigReq, opts ...grpc.CallOption) (*GetConfigRes, error) {
-	out := new(GetConfigRes)
-	err := c.cc.Invoke(ctx, Greeter_GetConfig_FullMethodName, in, out, opts...)
+func (c *greeterClient) Get(ctx context.Context, in *GetReq, opts ...grpc.CallOption) (*GetRes, error) {
+	out := new(GetRes)
+	err := c.cc.Invoke(ctx, Greeter_Get_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -86,7 +86,7 @@ func (x *greeterWatchClient) Recv() (*WatchRes, error) {
 // All implementations must embed UnimplementedGreeterServer
 // for forward compatibility
 type GreeterServer interface {
-	GetConfig(context.Context, *GetConfigReq) (*GetConfigRes, error)
+	Get(context.Context, *GetReq) (*GetRes, error)
 	Watch(*WatchReq, Greeter_WatchServer) error
 	mustEmbedUnimplementedGreeterServer()
 }
@@ -95,8 +95,8 @@ type GreeterServer interface {
 type UnimplementedGreeterServer struct {
 }
 
-func (UnimplementedGreeterServer) GetConfig(context.Context, *GetConfigReq) (*GetConfigRes, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetConfig not implemented")
+func (UnimplementedGreeterServer) Get(context.Context, *GetReq) (*GetRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Get not implemented")
 }
 func (UnimplementedGreeterServer) Watch(*WatchReq, Greeter_WatchServer) error {
 	return status.Errorf(codes.Unimplemented, "method Watch not implemented")
@@ -114,20 +114,20 @@ func RegisterGreeterServer(s grpc.ServiceRegistrar, srv GreeterServer) {
 	s.RegisterService(&Greeter_ServiceDesc, srv)
 }
 
-func _Greeter_GetConfig_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetConfigReq)
+func _Greeter_Get_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetReq)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(GreeterServer).GetConfig(ctx, in)
+		return srv.(GreeterServer).Get(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: Greeter_GetConfig_FullMethodName,
+		FullMethod: Greeter_Get_FullMethodName,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(GreeterServer).GetConfig(ctx, req.(*GetConfigReq))
+		return srv.(GreeterServer).Get(ctx, req.(*GetReq))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -161,8 +161,8 @@ var Greeter_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*GreeterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetConfig",
-			Handler:    _Greeter_GetConfig_Handler,
+			MethodName: "Get",
+			Handler:    _Greeter_Get_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{
@@ -172,5 +172,5 @@ var Greeter_ServiceDesc = grpc.ServiceDesc{
 			ServerStreams: true,
 		},
 	},
-	Metadata: "config.proto",
+	Metadata: "configmgr.proto",
 }

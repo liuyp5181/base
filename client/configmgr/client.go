@@ -1,4 +1,4 @@
-package config
+package configmgr
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"sync"
 
-	pb "github.com/liuyp5181/base/client/config/api"
+	pb "github.com/liuyp5181/base/client/configmgr/api"
 	"github.com/liuyp5181/base/log"
 	"github.com/liuyp5181/base/service"
 )
@@ -18,6 +18,14 @@ var configList = struct {
 	list map[string]map[string]interface{}
 }{
 	list: map[string]map[string]interface{}{},
+}
+
+func Init() error {
+	err := service.InitClients(pb.Greeter_ServiceDesc.ServiceName)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func load(val []byte, conf interface{}, confType string) error {
@@ -46,7 +54,7 @@ func Load(group, key string, confPtr interface{}, confType string) error {
 		return err
 	}
 	c := pb.NewGreeterClient(cc)
-	resp, err := c.GetConfig(context.Background(), &pb.GetConfigReq{Key: key})
+	resp, err := c.Get(context.Background(), &pb.GetReq{Group: group, Key: key})
 	if err != nil {
 		log.Error(err)
 		return err
@@ -78,9 +86,10 @@ func Watch(group, key string, confPtr interface{}, confType string) error {
 	}
 	t = t.Elem()
 
-	list := service.GetClientList(pb.Greeter_ServiceDesc.ServiceName)
-	if len(list) == 0 {
-		return fmt.Errorf("not found service, name = %s", pb.Greeter_ServiceDesc.ServiceName)
+	list, err := service.GetClientList(pb.Greeter_ServiceDesc.ServiceName)
+	if err != nil {
+		log.Error(err)
+		return err
 	}
 
 	for _, cc := range list {
@@ -131,12 +140,16 @@ func Watch(group, key string, confPtr interface{}, confType string) error {
 	return nil
 }
 
-func GetConfig(group, key string) interface{} {
+func Get(group, key string) (interface{}, error) {
 	configList.RLock()
 	defer configList.RUnlock()
 	m, ok := configList.list[group]
 	if !ok {
-		return nil
+		return nil, fmt.Errorf("group not found config group = %v, key = %v", group, key)
 	}
-	return m[key]
+	conf, ok := m[key]
+	if !ok {
+		return nil, fmt.Errorf("key not found config group = %v, key = %v", group, key)
+	}
+	return conf, nil
 }

@@ -20,7 +20,7 @@ func init() {
 	flag.IntVar(&monitorPort, "moPort", defaultMonitorPort, "monitor port")
 }
 
-func Init() {
+func Register() error {
 	//提供 /metrics HTTP 端点
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
@@ -29,9 +29,12 @@ func Init() {
 			panic(err)
 		}
 	}()
-}
 
-func Register() error {
+	err := service.InitClients(pb.Greeter_ServiceDesc.ServiceName)
+	if err != nil {
+		return err
+	}
+
 	cc, err := service.GetClient(pb.Greeter_ServiceDesc.ServiceName)
 	if err != nil {
 		return err
@@ -44,5 +47,8 @@ func Register() error {
 	if err != nil {
 		return err
 	}
+
+	service.CloseClients(pb.Greeter_ServiceDesc.ServiceName)
+
 	return nil
 }

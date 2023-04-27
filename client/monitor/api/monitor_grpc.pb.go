@@ -21,7 +21,7 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Greeter_Register_FullMethodName = "/configmgr.Greeter/Register"
+	Greeter_Register_FullMethodName = "/monitor.Greeter/Register"
 )
 
 // GreeterClient is the client API for Greeter service.
@@ -98,7 +98,7 @@ func _Greeter_Register_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Greeter_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "configmgr.Greeter",
+	ServiceName: "monitor.Greeter",
 	HandlerType: (*GreeterServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{

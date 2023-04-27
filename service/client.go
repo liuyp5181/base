@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"github.com/liuyp5181/base/config"
 	"github.com/liuyp5181/base/etcd"
@@ -10,122 +9,17 @@ import (
 	"github.com/liuyp5181/base/service/extend"
 	"github.com/liuyp5181/base/service/proxy"
 	"github.com/liuyp5181/base/util"
-	"go.etcd.io/etcd/api/v3/mvccpb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	_ "google.golang.org/grpc/health"
 	"google.golang.org/grpc/metadata"
-	"math/rand"
-	"sync"
-	"time"
 )
 
 type Client struct {
-	Server *etcd.Service
-	Conn   *grpc.ClientConn
-	proxy  *proxy.Proxy
-}
-
-type Clients struct {
-	sync.RWMutex
-	list map[string][]*Client
-	m    map[string]*Client
-}
-
-var clients = &Clients{
-	list: map[string][]*Client{},
-	m:    map[string]*Client{},
-}
-
-func InitClients(serviceName ...string) error {
-	if len(serviceName) == 0 {
-		return initClient("")
-	}
-	for _, n := range serviceName {
-		if err := initClient(n); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func setClient(key string, s etcd.Service) error {
-	if s.Name == config.ServiceName && s.IP == config.GetConfig().Server.IP && s.Port == config.GetConfig().Server.Port {
-		return nil
-	}
-
-	f := func() bool {
-		clients.Lock()
-		defer clients.Unlock()
-		c, ok := clients.m[key]
-		if ok {
-			c.Server = &s
-		}
-		return ok
-	}
-	if f() {
-		return nil
-	}
-
-	c, err := newClient(&s)
-	if err != nil {
-		return err
-	}
-	fmt.Println("set", key, c)
-	clients.Lock()
-	defer clients.Unlock()
-	clients.m[key] = c
-	clients.list[c.Server.Name] = append(clients.list[c.Server.Name], c)
-
-	return nil
-}
-
-func delClient(key string) {
-	fmt.Println("del", key)
-	clients.Lock()
-	defer clients.Unlock()
-	c := clients.m[key]
-	if c == nil {
-		return
-	}
-	s := c.Server
-	delete(clients.m, key)
-	list := clients.list[s.Name]
-	for i, v := range list {
-		if s.IP == v.Server.IP && s.Port == v.Server.Port {
-			clients.list[s.Name] = append(list[:i], list[i+1:]...)
-			return
-		}
-	}
-}
-
-func getClient(name string) *Client {
-	rand.Seed(time.Now().UnixNano())
-	clients.RLock()
-	defer clients.RUnlock()
-	list := clients.list[name]
-	fmt.Println("getClient", list, len(list))
-	if len(list) == 0 {
-		return nil
-	}
-
-	var max int
-	for _, v := range list {
-		max += v.Server.Power
-	}
-	r := rand.Intn(max)
-	var index int
-	for _, v := range list {
-		if v.Server.Power == 0 {
-			continue
-		}
-		index += v.Server.Power
-		if r < index {
-			return v
-		}
-	}
-
-	return nil
+	Server     *etcd.Service
+	Conn       *grpc.ClientConn
+	proxy      *proxy.Proxy
+	cancelFunc context.CancelFunc
 }
 
 // unaryClientInterceptor 拦截器，相对于中间件
@@ -178,94 +72,6 @@ func newClient(s *etcd.Service) (*Client, error) {
 	return c, nil
 }
 
-func initClient(name string) error {
-	is := func() bool {
-		clients.RLock()
-		defer clients.RUnlock()
-		if len(clients.list[name]) > 0 {
-			return true
-		}
-		return false
-	}
-	if is() {
-		return nil
-	}
-
-	list, err := etcd.GetService(name)
-	if err != nil {
-		return err
-	}
-	fmt.Println("initClient", len(list))
-
-	for _, s := range list {
-		fmt.Println("initClient", s)
-		err = setClient(s.Key, s)
-		if err != nil {
-			return err
-		}
-	}
-
-	go watchClient(name)
-
-	return nil
-}
-
-func watchClient(name string) {
-	rch := etcd.WatcherService(name)
-	for wresp := range rch {
-		for _, ev := range wresp.Events {
-			fmt.Println("watch", ev.Type, string(ev.Kv.Key), string(ev.Kv.Value))
-
-			switch ev.Type {
-			case mvccpb.PUT:
-				var s etcd.Service
-				err := json.Unmarshal(ev.Kv.Value, &s)
-				if err != nil {
-					continue
-				}
-				err = setClient(string(ev.Kv.Key), s)
-				if err != nil {
-					continue
-				}
-			case mvccpb.DELETE:
-				delClient(string(ev.Kv.Key))
-			}
-		}
-	}
-}
-
-func PrintClient() {
-	clients.RLock()
-	defer clients.RUnlock()
-	for k, c := range clients.m {
-		log.Info("PrintClient", k, c, c.Server)
-	}
-	for _, l := range clients.list {
-		for i, v := range l {
-			log.Info("PrintClient", i, v, v.Server)
-		}
-	}
-}
-
-func GetClient(name string) (*Client, error) {
-	c := getClient(name)
-	fmt.Println("GetClient", c)
-	if c == nil {
-		return nil, fmt.Errorf("not found, name = %v", name)
-	}
-
-	// todo ping
-	return c, nil
-}
-
-func GetClientList(name string) []*Client {
-	clients.RLock()
-	defer clients.RUnlock()
-	list := clients.list[name]
-	fmt.Println("GetClientList", list, len(list))
-	return list
-}
-
 func (c *Client) Invoke(ctx context.Context, method string, args interface{}, reply interface{}, opts ...grpc.CallOption) error {
 	return c.Conn.Invoke(ctx, method, args, reply, opts...)
 }
@@ -280,4 +86,13 @@ func (c *Client) Proxy(ctx context.Context, methodName string, message []byte, o
 		return nil, err
 	}
 	return rsp, nil
+}
+
+func (c *Client) close() {
+	if c.Conn != nil {
+		c.Conn.Close()
+	}
+	if c.cancelFunc != nil {
+		c.cancelFunc()
+	}
 }

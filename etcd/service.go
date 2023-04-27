@@ -56,9 +56,10 @@ func initService() {
 }
 
 // WatcherService 负责将监听到的put、delete请求存放到指定list
-func WatcherService(name string) clientv3.WatchChan {
+func WatcherService(cancelCtx context.Context, name string) clientv3.WatchChan {
 	key := fmt.Sprintf("%s/%s", serviceKey, name)
-	return client.Watch(context.Background(), key, clientv3.WithPrefix())
+	watcher := clientv3.NewWatcher(client)
+	return watcher.Watch(cancelCtx, key, clientv3.WithPrefix())
 }
 
 func GetService(name string) ([]Service, error) {

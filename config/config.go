@@ -136,8 +136,8 @@ func readConfig() error {
 	return nil
 }
 
-// LoadLocal load config by local config file
-func LoadLocal(conf interface{}) error {
+// Load config by local config file
+func Load(conf interface{}) error {
 	var ext = struct {
 		Extend interface{} `mapstructure:"extend"`
 	}{
@@ -150,6 +150,6 @@ func LoadLocal(conf interface{}) error {
 	return nil
 }
 
-func GetConfig() Conf {
+func Get() Conf {
 	return cfg
 }
